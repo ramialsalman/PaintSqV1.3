@@ -5,7 +5,7 @@
 	android:layout_height="wrap_content"
 	android:stretchColumns="*">
 
-	<TableRow android:minHeight="260dp" >
+	<TableRow android:minHeight="350dp" >
 
 		<ImageView
 		    android:minHeight="148dp"

@@ -68,7 +68,13 @@ public class writer {
     	   
     	   for(int j = 0 ; j < ((joPath)joBmp.content.get(i)).PointsCount();j++){
     		   Element ptML = document.createElement("Point");
-    		   JoPoint tmpPT = ((joPath)joBmp.content.get(i)).GetTrasformedPoint(j, joBmp.width, joBmp.height) ;
+    		   JoPoint tmpPT = 
+    				   ((joPath)joBmp.content.get(i))
+    				   .GetTrasformedPoint(
+    						   ((joPath)joBmp.content.get(i)).getPoint(j), 
+    						   joBmp.width, 
+    						   joBmp.height,
+    						   true) ;
     		   
     		   ptML.setAttribute("X",String.valueOf(tmpPT.x ));
     		   ptML.setAttribute("Y",String.valueOf(tmpPT.y ));

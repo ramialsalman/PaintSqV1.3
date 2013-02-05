@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 
+import android.R.bool;
 import android.R.color;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -15,11 +16,10 @@ import android.graphics.Path;
 import android.text.format.Time;
 
 public class joPath extends joShape{
-	private List<Float>  pts = new ArrayList<Float>();
+	private List<JoPoint>  pts = new ArrayList<JoPoint>();
 	
 	
 	private boolean finalized = false;
-	private float[] Lines = null;
 	private float[] ct = null;
 	
 	private Path path = new Path();
@@ -35,90 +35,174 @@ public class joPath extends joShape{
 		StrokeWidth = Linewidth;
 	}
 	
-	public JoPoint GetTrasformedPoint(int i,float ScreenWidth,float ScreenHeight){
+	public JoPoint GetTrasformedPoint(JoPoint pt,float ScreenWidth,float ScreenHeight,Boolean withNormalization){
 		//1-translate
 		//2-rotate
 		//3-scale
-		i = i*2;//  (i,i+1)==(x,y) point :P
-		JoPoint pt = new JoPoint(pts.get(i),pts.get(i+1));
-		float [] ct = GetCenterPoint();
+		
+		
+		float [] ctW  = this.ct;    //= GetCenterPoint();
+		
+		
+	//	pt.x  = 0;
+	//	pt.y = 0;
+		
+	//	Angle = (float) Math.PI;
 		
 		pt.x  += translateX;
 		pt.y  += translateY;
-		ct[0] += translateX;
-		ct[1] += translateY;
-		
-		pt.x  -= ScreenWidth/2; //convert to cartesian coordinates 
-		pt.y   = ScreenHeight/2 -pt.y;
-		
-		ct[0] -= ScreenWidth/2;
-		ct[1]  = ScreenHeight/2 - ct[1]; 
-		
-		//translate points to the center
-		pt.x =  pt.x -  ct[0];
-		pt.y =  pt.y -  ct[1];
-		
-		//rotate around the center
-		float xbar =  (float)( pt.x * Math.cos(Angle* (180/Math.PI)) + pt.y * Math.sin(Angle*(180/Math.PI)));
-		float ybar =  (float)(-pt.x * Math.sin(Angle* (180/Math.PI)) + pt.y * Math.cos(Angle*(180/Math.PI)));
-		
-		//translate back
-		pt.x = xbar + ct[0];
-		pt.y = ybar + ct[1];
+		ctW[0] += translateX;
+		ctW[1] += translateY;
 		
 		pt.x *= scale;
 		pt.y *= scale;
 		
-	//	convert to normalized coordinates   -1 .... 0 .... 1
-		pt.x /= ScreenWidth ;
-		pt.y /= ScreenHeight;
+		pt.x  -= ScreenWidth/2; //convert to cartesian coordinates 
+		pt.y   = ScreenHeight/2 -pt.y;
 		
+		ctW[0] -= ScreenWidth/2;
+		ctW[1]  = ScreenHeight/2 - ctW[1]; 
+		
+		//translate points to the center
+		pt.x =  pt.x -  ctW[0];
+		pt.y =  pt.y -  ctW[1];
+		
+		//rotate around the center
+		
+		
+		float xbar =  (float)( pt.x * Math.cos(Angle* (180/Math.PI)) + pt.y * Math.sin(Angle*(180/Math.PI)));
+		float ybar =  (float)(-pt.x * Math.sin(Angle* (180/Math.PI)) + pt.y * Math.cos(Angle*(180/Math.PI)));
+		
+		//translate back
+		pt.x = xbar + ctW[0];
+		pt.y = ybar + ctW[1];
+		
+		
+		
+	//	convert to normalized coordinates   -1 .... 0 .... 1
+		if (withNormalization){
+			pt.x /= ScreenWidth ;
+			pt.y /= ScreenHeight;
+		}else{//convert again to our mode not cartesian
+			pt.x += ScreenWidth/2;
+			pt.y  = - (pt.y - ScreenHeight/2);
+		}
 		return pt;
 		
 		
 	}
 	public int PointsCount(){
-		return pts.size()/2;
+		return pts.size();
 	}
 	
-	public void AddLine (float x1,float y1,float x2 , float y2){
-		pts.add(x1);
-		pts.add(y1);
-		pts.add(x2);
-		pts.add(y2);
+	public JoPoint getPoint (int i){
+		return pts.get(i);
 	}
-	
+	public void setPoint(int i, JoPoint pt){
+		pts.get(i).x = pt.x;
+		pts.get(i).y = pt.y;
+	}
+
+	public void AddPoint(float x ,float y){
+		pts.add(new JoPoint(x,y));
+	}
 	@Override
 	public void EndShape(){
 		ct = GetCenterPoint();
 		//Lines = GetLines();
 		finalized=true;
 		
-		path.reset();
-		for(int i=0 ; i < pts.size()-4;i+=6){
-			if (i==0 ) path.moveTo(pts.get(i), pts.get(i+1));
-			else
-				path.lineTo(pts.get(i),pts.get(i+1));
-			
-			path.lineTo(pts.get(i+2), pts.get(i+3));
-			
-			//if ((i+2)%4 ==0 ) i = i+2;//skip the two points 
-			
-		}
-		
-		
+		UpdatePath(true);
 		super.EndShape();
 	}
 	
-	public  float[]  GetLines (){
-		float [] x = new float[pts.size() ];
-		
-		for (int i = 0; i < pts.size(); i++) {
-		    x[i] = pts.get(i);
-		}
+	private void UpdatePath(Boolean withSmoothing ){
+		//path.reset();
+		//for(int i=0 ; i < pts.size()-4;i+=6){
+				//	if (i==0 ) path.moveTo(pts.get(i), pts.get(i+1));
+				//	else
+				//		path.lineTo(pts.get(i),pts.get(i+1));
+				//	path.lineTo(pts.get(i+2), pts.get(i+3));
+				//}
+		if (!withSmoothing ){
+		//without smoothing 
+			path.reset();
+			for (int i=0 ; i< pts.size();i++){
+				if (i==0 ) path.moveTo(pts.get(i).x, pts.get(i).y);
+				else       path.lineTo(pts.get(i).x, pts.get(i).y);
+			
+			}
+		//with smoothing 
+		}else{
+			/*-----------------------------------------------------------
+			
+			if(PointsCount() > 1){
+		        for(int i = PointsCount() - 2; i <PointsCount(); i++){
+		            if(i >= 0){
+		                JoPoint point = pts.get(i);
 
-		return x;
+		                if(i == 0){
+		                	JoPoint next = pts.get(i + 1);
+		                    point.dx = ((next.x - point.x) / 3);
+		                    point.dy = ((next.y - point.y) / 3);
+		                }
+		                else if(i == PointsCount() - 1){
+		                	JoPoint prev = pts.get(i - 1);
+		                    point.dx = ((point.x - prev.x) / 3);
+		                    point.dy = ((point.y - prev.y) / 3);
+		                }
+		                else{
+		                	JoPoint next = pts.get(i + 1);
+		                	JoPoint prev = pts.get(i - 1);
+		                    point.dx = ((next.x - prev.x) / 3);
+		                    point.dy = ((next.y - prev.y) / 3);
+		                }
+		            }
+		        }
+		    }
+			path.reset();
+		    boolean first = true;
+		    for(int i = 0; i < PointsCount(); i++){
+		    	JoPoint point = pts.get(i);
+		        if(first){
+		            first = false;
+		            path.moveTo(point.x, point.y);
+		        }
+		        else{
+		        	JoPoint prev = pts.get(i - 1);
+		            path.cubicTo(prev.x + prev.dx, prev.y + prev.dy, point.x - point.dx, point.y - point.dy, point.x, point.y);
+		        }
+		    }
+			*/
+			
+			path.reset();
+			if (pts.size() > 1) {
+			    JoPoint prevPoint = null;
+			    for (int i = 0; i < pts.size(); i++) {
+			        JoPoint point = pts.get(i);
+
+			        if (i == 0) {
+			            path.moveTo(point.x, point.y);
+			        } else {
+			            float midX = (prevPoint.x + point.x) / 2;
+			            float midY = (prevPoint.y + point.y) / 2;
+
+			            if (i == 1) {
+			                path.lineTo(midX, midY);
+			            } else {
+			                path.quadTo(prevPoint.x, prevPoint.y, midX, midY);
+			            }
+			        }
+			        prevPoint = point;
+			    }
+			    path.lineTo(prevPoint.x, prevPoint.y);
+			}
+		}
+	
+	
 	}
+	
+
 	
 	@Override
 	public void Draw(Canvas cav,Paint paint){
@@ -126,24 +210,7 @@ public class joPath extends joShape{
 		
 		if(!finalized){
 			ct = GetCenterPoint();
-			//Lines = GetLines();
-			
-			
-			path.reset();
-			for(int i=0 ; i < pts.size()-4;i+=6){
-				if (i==0 ) path.moveTo(pts.get(i), pts.get(i+1));
-				else
-					path.lineTo(pts.get(i),pts.get(i+1));
-				
-				path.lineTo(pts.get(i+2), pts.get(i+3));
-				
-				//if ((i+2)%4 ==0 ) i = i+2;//skip the two points 
-				
-			}
-			
-			
-			
-			
+			UpdatePath(false);	
 		}
 		cav.translate(translateX, translateY);
 		cav.rotate(Angle,ct[0],ct[1]);
@@ -193,17 +260,17 @@ public class joPath extends joShape{
 	@Override
 	public  float [] GetMinBoundBox(){
 		float [] tmp   =  {0,0,0,0};
-		tmp[2] = tmp[0] = pts.get(0); //MinX
-		tmp[3] = tmp[1] = pts.get(1); //MinY
+		tmp[2] = tmp[0] = pts.get(0).x; //MinX
+		tmp[3] = tmp[1] = pts.get(1).y; //MinY
 		
 		
 		
-		for (int i=2; i< pts.size()-1 ;i+=2){
-			if (tmp[0] > pts.get(i)  ) tmp[0] = pts.get(i);  //minX
-			if (tmp[2] < pts.get(i)  ) tmp[2] = pts.get(i);  //MaxX
+		for (int i=2; i< pts.size() ;i++){
+			if (tmp[0] > pts.get(i).x  ) tmp[0] = pts.get(i).x;  //minX
+			if (tmp[2] < pts.get(i).x  ) tmp[2] = pts.get(i).x;  //MaxX
 			
-			if (tmp[1] > pts.get(i+1)) tmp[1] = pts.get(i+1);  //minY
-			if (tmp[3] < pts.get(i+1)) tmp[3] = pts.get(i+1);  //minX
+			if (tmp[1] > pts.get(i).y) tmp[1] = pts.get(i).y;  //minY
+			if (tmp[3] < pts.get(i).y) tmp[3] = pts.get(i).y;  //minX
 
 		}
 		

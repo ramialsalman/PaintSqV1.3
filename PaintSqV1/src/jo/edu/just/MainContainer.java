@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.text.style.SuperscriptSpan;
 import android.util.Log;
 import android.view.Gravity;
@@ -241,11 +242,15 @@ public class MainContainer extends Activity implements OnSlideMenuItemClickListe
 		case R.id.item_export_without_stamps:
 			AlertDialog.Builder popupBuilder = new AlertDialog.Builder(this);
 			TextView myMsg = new TextView(this);
+					 myMsg.setMovementMethod(new ScrollingMovementMethod());
+					 myMsg.setTextColor(myMsg.getTextColors().getDefaultColor());
+					 
 			myMsg.setText((new jo.edu.just.XML.writer()).GenerateXML(dv.dynamicBitmap, itemId == R.id.item_export_with_stamps)
 					);
 			myMsg.setGravity(Gravity.LEFT);
 			popupBuilder.setView(myMsg);
 			popupBuilder.show();
+			break;
 		case R.id.item_about:
 			AboutDialog abt = new AboutDialog(this);
 			abt.setTitle("About ASET");

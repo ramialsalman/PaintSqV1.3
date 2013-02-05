@@ -6,4 +6,10 @@ public class JoPoint {
 		y = _y;
 	}
 	public float x,y;
+	
+	public float dx,dy;
+	
+	public JoPoint clone(){
+		return new JoPoint(x, y);
+	}
 }

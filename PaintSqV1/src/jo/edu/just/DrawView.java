@@ -90,10 +90,10 @@ public class DrawView extends View implements OnTouchListener
 		setFocusableInTouchMode(true);
 		this.setOnTouchListener(this);
 		
-		paint.setColor(Color.YELLOW);
+		paint.setColor(Color.BLACK);
 		paint.setAntiAlias(true);
 		//see http://www.croczilla.com/bits_and_pieces/svg/samples/linestroke/linestroke.xml
-		//paint.setStrokeWidth(30.0f);
+		paint.setStrokeWidth(30.0f);
 		//paint.setStrokeCap(Cap.ROUND);   
 		//paint.setStrokeJoin(Join.ROUND);   
 		//paint.setStrokeMiter(4.0f);        
@@ -108,12 +108,44 @@ public class DrawView extends View implements OnTouchListener
 		AllCanvas	= new Canvas(AllBitmap1);
 		AllCanvas2	= new Canvas(AllBitmap2);
 		
+		dynamicBitmap.SetBackColor(Color.WHITE);
 		dynamicBitmap.SetOptions(width,height,AllBitmap1,AllBitmap2,AllCanvas,AllCanvas2, paint);
 		
 		gestureDetector= new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
 		  		
 			
 			public boolean onSingleTapUp(MotionEvent e){
+				
+				
+				//test block only
+				if (false)
+					if (dynamicBitmap.LastItem()!=null){
+						
+						for (int i=0 ; i< ((joPath)dynamicBitmap.LastItem()).PointsCount();i++   ){
+							((joPath)dynamicBitmap.LastItem()).setPoint(i,
+							((joPath)dynamicBitmap.LastItem()).GetTrasformedPoint(((joPath)dynamicBitmap.LastItem()).getPoint(i)
+									, dynamicBitmap.width,
+									  dynamicBitmap.height,
+									  false)
+									);
+						}
+						((joPath)dynamicBitmap.LastItem()).scale =1.0f;
+						((joPath)dynamicBitmap.LastItem()).Angle=0.0f;
+						((joPath)dynamicBitmap.LastItem()).translateX=0.0f;
+						((joPath)dynamicBitmap.LastItem()).translateY=0.0f;
+						((joPath)dynamicBitmap.LastItem()).EndShape();
+						invalidate();
+						
+						
+						
+					}
+					
+				//------------------
+				
+				
+				
+				
+				
 				
 				if(dynamicBitmap.InEditMode){
 					joShape x = dynamicBitmap.GetObjectOnPos(e.getX() , e.getY());
@@ -234,12 +266,15 @@ public class DrawView extends View implements OnTouchListener
 						Log.d("hhr","distance");
 						CreatedObject = true;
 						dynamicBitmap.AddItem(new joPath(paint.getColor(),paint.getStrokeWidth()));
+						((joPath)(dynamicBitmap.LastItem())).AddPoint(oldX,oldY);
+						
 						//
 						UseTheSecondLayer = dynamicBitmap.LastItem().UseTheSecondLayer();
 					}
 					if (dynamicBitmap.LastItem() !=  null){
 						//AllCanvas.drawLine(oldX, oldY, detector.getFocusDelta().x,detector.getFocusDelta().y,paint);
-						((joPath)(dynamicBitmap.LastItem())).AddLine(oldX, oldY, detector.getFocusDelta().x, detector.getFocusDelta().y);
+						//((joPath)(dynamicBitmap.LastItem())).AddLine(oldX, oldY, detector.getFocusDelta().x, detector.getFocusDelta().y);
+						((joPath)(dynamicBitmap.LastItem())).AddPoint(detector.getFocusDelta().x, detector.getFocusDelta().y);
 						oldX =  detector.getFocusDelta().x;
 						oldY = detector.getFocusDelta().y;
 						postInvalidate();
